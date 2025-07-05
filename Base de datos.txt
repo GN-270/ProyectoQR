@@ -1,0 +1,54 @@
+CREATE DATABASE `inventario_fys` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `inventario_fys`;
+DROP TABLE IF EXISTS `Empleados`;
+CREATE TABLE `Empleados` (
+  `id_empleado` int(8) unsigned zerofill NOT NULL COMMENT 'ID Ãºnico del empleado (8 nÃºmeros, rellenado con ceros a la izquierda)',
+  `dni` varchar(10) NOT NULL COMMENT 'NÃºmero de DNI del empleado',
+  `nombres` varchar(100) NOT NULL COMMENT 'Nombres del empleado',
+  `apellidos` varchar(100) NOT NULL COMMENT 'Apellidos del empleado',
+  `labor` enum('Electricista','MecÃ¡nico','Ayudante','Operario','Personal de mantenimiento','Personal de Limpieza') NOT NULL COMMENT 'Rol del empleado',
+  `qr_code_path` varchar(255) DEFAULT NULL COMMENT 'Ruta donde se guarda la imagen del cÃ³digo QR del empleado',
+  PRIMARY KEY (`id_empleado`),
+  UNIQUE KEY `id_empleado` (`id_empleado`),
+  UNIQUE KEY `dni` (`dni`),
+  KEY `idx_empleados_dni` (`dni`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='InformaciÃ³n de los empleados de la empresa FYS';
+LOCK TABLES `Empleados` WRITE;
+INSERT INTO `Empleados` VALUES (00000001,'12345678A','Juan','PÃ©rez GarcÃ­a','Operario','/qrcodes/empleados/00000001.png'),(00000002,'87654321B','MarÃ­a','LÃ³pez FernÃ¡ndez','Electricista',NULL),(00000003,'00000003C','Carlos','Ramirez','Ayudante',NULL);
+UNLOCK TABLES;
+DROP TABLE IF EXISTS `Herramientas`;
+CREATE TABLE `Herramientas` (
+  `id_herramienta` int NOT NULL AUTO_INCREMENT COMMENT 'ID Ãºnico de la herramienta (autoincremental)',
+  `nombre` varchar(100) NOT NULL COMMENT 'Nombre de la herramienta (ej. Llave Inglesa)',
+  `marca` varchar(50) DEFAULT NULL COMMENT 'Marca de la herramienta',
+  `descripcion` text COMMENT 'DescripciÃ³n detallada de la herramienta',
+  `estado` enum('pesimo','regular','excelente') NOT NULL COMMENT 'Estado fÃ­sico actual de la herramienta',
+  `disponibilidad` enum('En uso','Libre') NOT NULL DEFAULT 'Libre' COMMENT 'Indica si la herramienta estÃ¡ disponible o en uso',
+  `asignado_a` int(8) unsigned zerofill DEFAULT NULL COMMENT 'ID del empleado al que estÃ¡ asignada la herramienta si estÃ¡ En uso (FK a Empleados)',
+  `qr_code_path` varchar(255) DEFAULT NULL COMMENT 'Ruta donde se guarda la imagen del cÃ³digo QR de la herramienta',
+  PRIMARY KEY (`id_herramienta`),
+  KEY `asignado_a` (`asignado_a`),
+  KEY `idx_herramientas_nombre` (`nombre`),
+  CONSTRAINT `Herramientas_ibfk_1` FOREIGN KEY (`asignado_a`) REFERENCES `Empleados` (`id_empleado`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='InformaciÃ³n del inventario de herramientas';
+LOCK TABLES `Herramientas` WRITE;
+INSERT INTO `Herramientas` VALUES (1,'Llave Ajustable','Bahco','Llave ajustable de 10 pulgadas','excelente','Libre',NULL,NULL),(2,'Taladro Percutor','Bosch','Taladro percutor potente de 800W con maletín y brocas.','excelente','Libre',NULL,'resources\\qrcodes\\herramientas\\H2.png'),(3,'Set de Destornilladores','Stanley','Set de destornilladores planos y de estrella','excelente','Libre',NULL,NULL),(4,'MultÃ­metro Digital','Fluke','MultÃ­metro para mediciones elÃ©ctricas','pesimo','Libre',NULL,NULL),(5,'Martillo de bola','Truper','Martillo con cabeza esférica de 24oz','excelente','Libre',NULL,NULL),(6,'Martillo de bola','Truper','Martillo con cabeza esférica de 24oz','excelente','Libre',NULL,'resources\\qrcodes\\herramientas\\H6.png');
+UNLOCK TABLES;
+DROP TABLE IF EXISTS `HistorialMovimientos`;
+CREATE TABLE `HistorialMovimientos` (
+  `id_movimiento` int NOT NULL AUTO_INCREMENT COMMENT 'ID Ãºnico del registro de movimiento',
+  `tipo_accion` varchar(50) NOT NULL,
+  `fecha_hora` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha y hora exactas del movimiento',
+  `id_empleado` int(8) unsigned zerofill NOT NULL COMMENT 'ID del empleado que realizÃ³ la acciÃ³n (FK a Empleados)',
+  `id_herramienta` int NOT NULL COMMENT 'ID de la herramienta involucrada en el movimiento (FK a Herramientas)',
+  `comentarios` text COMMENT 'Comentarios adicionales del administrador o usuario sobre el movimiento',
+  PRIMARY KEY (`id_movimiento`),
+  KEY `id_herramienta` (`id_herramienta`),
+  KEY `idx_historial_fecha` (`fecha_hora`),
+  KEY `idx_historial_empleado_herramienta` (`id_empleado`,`id_herramienta`),
+  CONSTRAINT `HistorialMovimientos_ibfk_1` FOREIGN KEY (`id_empleado`) REFERENCES `Empleados` (`id_empleado`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `HistorialMovimientos_ibfk_2` FOREIGN KEY (`id_herramienta`) REFERENCES `Herramientas` (`id_herramienta`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Registro de todas las prestaciones y devoluciones de herramientas';
+LOCK TABLES `HistorialMovimientos` WRITE;
+INSERT INTO `HistorialMovimientos` VALUES (1,'Prestacion','2025-07-04 02:49:23',00000001,1,'Herramienta prestada para trabajo en campo.'),(2,'Devolucion','2025-07-04 02:49:24',00000001,1,'Herramienta devuelta después de uso, estado ok.');
+UNLOCK TABLES;

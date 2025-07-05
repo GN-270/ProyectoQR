@@ -29,7 +29,7 @@ Asegúrate de tener instalado lo siguiente:
 
 * **Java Development Kit (JDK) 11 o superior:**
     * Puedes descargarlo desde el sitio oficial de Oracle o usar una distribución OpenJDK (como Adoptium Temurin).
-* 
+  
 * **Un IDE (Entorno de Desarrollo Integrado):**
     * IntelliJ IDEA (recomendado)
     * Eclipse

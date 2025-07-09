@@ -92,7 +92,7 @@ CREATE TABLE `HistorialMovimientos` (
   CONSTRAINT `HistorialMovimientos_ibfk_1` FOREIGN KEY (`id_empleado`) REFERENCES `Empleados` (`id_empleado`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `HistorialMovimientos_ibfk_2` FOREIGN KEY (`id_herramienta`) REFERENCES `Herramientas` (`id_herramienta`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Registro de todas las prestaciones y devoluciones de herramientas';
-    ``` sql
+    ```
 3.  **Configurar Credenciales de la Base de Datos en Java:**
     Asegúrate de que el archivo `com.fys.inventario.util.DatabaseConnection` (o su equivalente) contenga las credenciales correctas para tu base de datos MySQL (host, puerto, nombre de usuario, contraseña).
 

@@ -46,52 +46,60 @@ Asegúrate de tener instalado lo siguiente:
 2.  **Crear Tablas:**
     Ejecuta el script SQL que contiene la definición de tus tablas. Deberías tener un archivo `.sql` con las sentencias `CREATE TABLE`. Si lo tienes, puedes importarlo directamente o copiar y pegar las sentencias.
 
-    **Asegúrate de que la tabla `Empleados` tenga la columna `id_empleado` como `AUTO_INCREMENT`:**
+   
     ```sql
-    -- Ejemplo (adapta esto a la estructura real de tus tablas)
-    CREATE TABLE Empleados (
-        id_empleado INT AUTO_INCREMENT PRIMARY KEY,
-        dni VARCHAR(20) UNIQUE NOT NULL,
-        nombres VARCHAR(100) NOT NULL,
-        apellidos VARCHAR(100) NOT NULL,
-        labor VARCHAR(100),
-        ruta_qr VARCHAR(255)
-    );
+    CREATE DATABASE IF NOT EXISTS `inventario_fys` 
+USE `inventario_fys`;
 
-    CREATE TABLE Herramientas (
-        id_herramienta INT AUTO_INCREMENT PRIMARY KEY,
-        nombre VARCHAR(100) NOT NULL,
-        marca VARCHAR(50),
-        modelo VARCHAR(50),
-        numero_serie VARCHAR(100) UNIQUE,
-        estado ENUM('Disponible', 'Prestada', 'Mantenimiento') NOT NULL DEFAULT 'Disponible',
-        asignado_a INT, -- FK a Empleados
-        ruta_qr VARCHAR(255),
-        FOREIGN KEY (asignado_a) REFERENCES Empleados(id_empleado) ON DELETE SET NULL
-    );
+SET FOREIGN_KEY_CHECKS = 0;
 
-    CREATE TABLE HistorialMovimientos (
-        id_movimiento INT AUTO_INCREMENT PRIMARY KEY,
-        id_herramienta INT,
-        id_empleado INT,
-        tipo_accion ENUM('Prestacion', 'Devolucion') NOT NULL, -- Renombrado de 'tipo_movimiento'
-        fecha_hora DATETIME NOT NULL,
-        comentarios TEXT, -- Renombrado de 'observaciones'
-        FOREIGN KEY (id_herramienta) REFERENCES Herramientas(id_herramienta) ON DELETE SET NULL,
-        FOREIGN KEY (id_empleado) REFERENCES Empleados(id_empleado) ON DELETE SET NULL
-    );
+DROP TABLE IF EXISTS `HistorialMovimientos`;
+DROP TABLE IF EXISTS `Herramientas`;
+DROP TABLE IF EXISTS `Empleados`;
 
-    -- Tabla de Usuarios (para el login simplificado)
-    CREATE TABLE Usuarios (
-        id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) NOT NULL, -- En este proyecto, se usará "admin" / "admin123" y "usuario" / "usuario123" hardcodeado
-        rol ENUM('admin', 'usuario') NOT NULL
-    );
+SET FOREIGN_KEY_CHECKS = 1;
 
-    -- Insertar usuarios de prueba (Solo si usas la tabla Usuarios)
-    INSERT INTO Usuarios (username, password_hash, rol) VALUES ('admin', 'admin123', 'admin');
-    INSERT INTO Usuarios (username, password_hash, rol) VALUES ('usuario', 'usuario123', 'usuario');
+CREATE TABLE `Empleados` (
+  `id_empleado` int(8) unsigned zerofill NOT NULL AUTO_INCREMENT COMMENT 'ID único del empleado (8 números, rellenado con ceros a la izquierda)',
+  `dni` varchar(10) NOT NULL UNIQUE COMMENT 'Número de DNI del empleado (Único)',
+  `nombres` varchar(100) NOT NULL COMMENT 'Nombres del empleado',
+  `apellidos` varchar(100) NOT NULL COMMENT 'Apellidos del empleado',
+  `labor` enum('Electricista','Mecánico','Ayudante','Operario','Personal de mantenimiento','Personal de Limpieza') NOT NULL COMMENT 'Rol del empleado',
+  `qr_code_path` varchar(255) DEFAULT NULL COMMENT 'Ruta donde se guarda la imagen del código QR del empleado',
+  PRIMARY KEY (`id_empleado`),
+  UNIQUE KEY `dni` (`dni`),
+  KEY `idx_empleados_dni` (`dni`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Información de los empleados de la empresa FYS';
+
+CREATE TABLE `Herramientas` (
+  `id_herramienta` int NOT NULL AUTO_INCREMENT COMMENT 'ID único de la herramienta (autoincremental)',
+  `nombre` varchar(100) NOT NULL COMMENT 'Nombre de la herramienta (ej. Llave Inglesa)',
+  `marca` varchar(50) DEFAULT NULL COMMENT 'Marca de la herramienta',
+  `descripcion` text COMMENT 'Descripción detallada de la herramienta',
+  `estado` enum('pesimo','regular','excelente') NOT NULL COMMENT 'Estado físico actual de la herramienta',
+  `disponibilidad` enum('En uso','Libre') NOT NULL DEFAULT 'Libre' COMMENT 'Indica si la herramienta está disponible o en uso',
+  `asignado_a` int(8) unsigned zerofill DEFAULT NULL COMMENT 'ID del empleado al que está asignada la herramienta si está En uso (FK a Empleados)',
+  `qr_code_path` varchar(255) DEFAULT NULL COMMENT 'Ruta donde se guarda la imagen del código QR de la herramienta',
+  PRIMARY KEY (`id_herramienta`),
+  KEY `asignado_a` (`asignado_a`),
+  KEY `idx_herramientas_nombre` (`nombre`),
+  CONSTRAINT `Herramientas_ibfk_1` FOREIGN KEY (`asignado_a`) REFERENCES `Empleados` (`id_empleado`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Información del inventario de herramientas';
+
+CREATE TABLE `HistorialMovimientos` (
+  `id_movimiento` int NOT NULL AUTO_INCREMENT COMMENT 'ID único del registro de movimiento',
+  `tipo_accion` varchar(50) NOT NULL COMMENT 'Tipo de acción registrada (ej. Prestación, Devolución)',
+  `fecha_hora` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha y hora exactas del movimiento',
+  `id_empleado` int(8) unsigned zerofill DEFAULT NULL COMMENT 'ID del empleado que realizó la acción (FK a Empleados)',
+  `id_herramienta` int DEFAULT NULL COMMENT 'ID de la herramienta involucrada en el movimiento (FK a Herramientas)',
+  `comentarios` text COMMENT 'Comentarios adicionales del administrador o usuario sobre el movimiento',
+  PRIMARY KEY (`id_movimiento`),
+  KEY `id_herramienta` (`id_herramienta`),
+  KEY `idx_historial_fecha` (`fecha_hora`),
+  KEY `idx_historial_empleado_herramienta` (`id_empleado`,`id_herramienta`),
+  CONSTRAINT `HistorialMovimientos_ibfk_1` FOREIGN KEY (`id_empleado`) REFERENCES `Empleados` (`id_empleado`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `HistorialMovimientos_ibfk_2` FOREIGN KEY (`id_herramienta`) REFERENCES `Herramientas` (`id_herramienta`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Registro de todas las prestaciones y devoluciones de herramientas';
     ```
 3.  **Configurar Credenciales de la Base de Datos en Java:**
     Asegúrate de que el archivo `com.fys.inventario.util.DatabaseConnection` (o su equivalente) contenga las credenciales correctas para tu base de datos MySQL (host, puerto, nombre de usuario, contraseña).

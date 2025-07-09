@@ -49,7 +49,7 @@ Asegúrate de tener instalado lo siguiente:
    
    ```sql
 CREATE DATABASE IF NOT EXISTS `inventario_fys` 
-USE `inventario_fys`;
+   USE `inventario_fys`;
 CREATE TABLE `Empleados` (
   `id_empleado` int(8) unsigned zerofill NOT NULL AUTO_INCREMENT COMMENT 'ID único del empleado (8 números, rellenado con ceros a la izquierda)',
   `dni` varchar(10) NOT NULL UNIQUE COMMENT 'Número de DNI del empleado (Único)',
